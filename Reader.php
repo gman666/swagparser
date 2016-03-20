@@ -4,7 +4,9 @@ class Reader {
 
 	private $data;
 
-	private $current;
+	private $current = [];
+
+    private $current_path;
 
 	public function __construct($url) {
 		
@@ -21,6 +23,7 @@ class Reader {
 		catch (Exception $e) {
 			die('error parsing json');
 		}
+		return $this;
 	}
 
 	public function getPath($path = null) {
@@ -35,6 +38,7 @@ class Reader {
 				$path_data[$k] = $v;
 			}
 		}
+        $this->current_path = $path;
 		$this->current = $path_data;
 		return $this;
 	}
@@ -48,6 +52,36 @@ class Reader {
 			}
 		}
 		$this->current = $path_data;
+		return $this;
+	}
+
+	public function byKey($key) {
+        if (!stristr($key, '/')) {
+            throw new Exception('invalid key');
+        }
+
+		$paths = explode("/", $key);
+
+        $obj = $this->iterate_heirachy($this->current[$this->current_path], $paths);
+        $this->current = $obj;
+        return $this;
+	}
+
+    public function iterate_heirachy($obj, $paths, $num = 0) {
+
+        if ($num == count($paths)) {
+            return $obj;
+        }
+
+        if (isset($obj[$paths[$num]])) {
+            return $this->iterate_heirachy($obj[$paths[$num]], $paths, $num+1);
+        }
+        else {
+            echo 'cannot navigate to ' . $paths[$num];
+        }
+    }
+
+	public function get() {
 		return $this->current;
 	}
 
